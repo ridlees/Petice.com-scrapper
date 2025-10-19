@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import requests as r
 from bs4 import BeautifulSoup as bs
 from random import randint
