@@ -8,7 +8,7 @@ import sys
 
 
 def saveCSV(data, output_file):
-    data_list = [item for sublist in data for item in sublist]
+    data_list = [item for sublist in data if sublist is not None for item in sublist]
 
     with open(output_file, "w", newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=["number", "name", "country", "comment", "date"])
@@ -73,12 +73,15 @@ def parseRow(row):
 
 def parseTable(table):
     data = []
-    rows = table.find_all("tr")
-    for row in rows:
-        parsed = parseRow(row)
-        if parsed: 
-            data.append(parsed)
-    return data
+    try:
+        rows = table.find_all("tr")
+        for row in rows:
+            parsed = parseRow(row)
+            if parsed: 
+                data.append(parsed)
+        return data
+    except:
+        return None
 
 def getData(link):
     data = []
