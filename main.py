@@ -72,6 +72,9 @@ def parseRow(row):
     }
 
 def parseTable(table):
+    if table is None:
+        return []
+    
     data = []
     try:
         rows = table.find_all("tr")
@@ -89,10 +92,11 @@ def getData(link):
     lastPage, firstPage = getLastPage(link)
     table = firstPage.find("table", id="signatures")
     data.append(parseTable(table))
-
+    if lastPage == None:
+        return data
+    
     for i in range(2, int(lastPage) + 1):
         url = f"{link}&page_number={i}&num_rows=500"
-        print(url)
         page = soup(get(url))
         pageTable = page.find("table", id="signatures")
         data.append(parseTable(pageTable))
@@ -101,16 +105,27 @@ def getData(link):
 
 
 def getLastPage(link):
-    link = f"{link}&page_number=0&num_rows=500"
+    link = f"{link}&page_number=1&num_rows=500"
     firstPage = soup(get(link))
     pageItems = [
     li for li in firstPage.select('ul.pagination li')
     if li.a and li.a.get_text(strip=True).isdigit()]
+
+    if pageItems == []:
+        return None, firstPage
     
     sortedItems = sorted(pageItems, key=lambda li: int(li.a.get_text(strip=True)))
     lastPage = sortedItems[-1].text
 
     return lastPage, firstPage
+
+def createLink(link):
+    link = link.split("?")[0]
+    if link[-1] == "?":
+        link[0:-1]
+    petitionName = link.split("/")[-1]
+    fullLink = f"https://www.petice.com/signatures.php?tunnus={petitionName}"
+    return fullLink
 
 def main():
     
@@ -133,13 +148,12 @@ def main():
         output_file = "output.csv"
         link = sys.argv[1]
 
-    if not link.startswith("https://www.petice.com/signatures.php"):
+    newLínk = createLink(link)
+    if not newLínk.startswith("https://www.petice.com/signatures.php"):
         print("Wrong host domain")
         sys.exit(1)
-
-    data = getData(link)
+    data = getData(newLínk)
     saveCSV(data, output_file)     
 
 if __name__ == "__main__":
     main()
-    
