@@ -5,11 +5,11 @@ from random import randint
 from time import sleep
 import csv
 import sys
+import re
 
 
 def saveCSV(data, output_file):
     data_list = [item for sublist in data if sublist is not None for item in sublist]
-
     with open(output_file, "w", newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=["number", "name", "country", "comment", "date"])
         writer.writeheader()
@@ -116,10 +116,17 @@ def getLastPage(link):
     
     sortedItems = sorted(pageItems, key=lambda li: int(li.a.get_text(strip=True)))
     lastPage = sortedItems[-1].text
-
+    
     return lastPage, firstPage
 
 def createLink(link):
+    if "tunnus" in link:
+        s = link.split("tunnus")[1]
+        result = re.search('=(.*)&page', s)
+        petitionName = result.group(1)
+        fullLink = f"https://www.petice.com/signatures.php?tunnus={petitionName}"
+        return fullLink
+    
     link = link.split("?")[0]
     if link[-1] == "?":
         link[0:-1]
@@ -148,12 +155,16 @@ def main():
         output_file = "output.csv"
         link = sys.argv[1]
 
-    newLínk = createLink(link)
-    if not newLínk.startswith("https://www.petice.com/signatures.php"):
+    newLink = createLink(link)
+    if not newLink.startswith("https://www.petice.com/signatures.php"):
         print("Wrong host domain")
         sys.exit(1)
-    data = getData(newLínk)
-    saveCSV(data, output_file)     
+    data = getData(newLink)
+    if data == None:
+        print("No data scrapped!")
+        sys.exit(1)
+    saveCSV(data, output_file)
+    print(f"Data saved in {output_file}")
 
 if __name__ == "__main__":
     main()
